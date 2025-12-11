@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+{% block title %}Home | PlotCraft{% endblock %}
+{% block content %}
+
+<div class="min-h-screen bg-gray-100 font-sans text-[#2F4F4F]">
+  <section class="container mx-auto px-6 py-10 max-w-7xl">
+
+    <div class="mb-12 flex justify-center">
+        <form action="{% url 'global_search' %}" method="GET" class="relative w-full max-w-2xl transform hover:scale-[1.01] transition duration-300">
+            <input type="text" 
+                   name="q" 
+                   placeholder="ค้นหาตัวละคร, ฉาก, หรือ Timeline..." 
+                   class="w-full pl-14 pr-6 py-4 rounded-full border-2 border-transparent shadow-lg bg-white text-[#2F4F4F] placeholder-gray-400 text-lg focus:border-[#DAA520]/50 focus:ring-4 focus:ring-[#DAA520]/10 focus:outline-none transition">
+            
+            <div class="absolute left-5 top-1/2 transform -translate-y-1/2 text-[#DAA520]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+        </form>
+    </div>
+
+    <div class="mb-10 p-8 bg-white rounded-2xl shadow-lg border border-[#2F4F4F]/10 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-[#DAA520] opacity-10 rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3"></div>
+        
+        <div class="relative z-10">
+            <h1 class="text-3xl md:text-4xl font-bold mb-4">
+                ยินดีต้อนรับ, <span class="text-[#DAA520]">{{ user.username|default:"นักเขียน" }}</span> 👋
+            </h1>
+            <p class="text-gray-600 text-lg max-w-2xl leading-relaxed">
+                นี่คือจุดเริ่มต้นจินตนาการของคุณใน <span class="font-bold text-[#2F4F4F]">PlotCraft</span> 
+                เครื่องมือที่จะช่วยร้อยเรียงโลก นิยาย และตัวละครให้เป็นหนึ่งเดียว
+            </p>
+            
+            <div class="mt-6 flex flex-wrap gap-3">
+
+                <a href="{% url 'notes:note_form' %}" class="px-5 py-2.5 bg-[#2F4F4F] hover:bg-[#1a3030] text-[#FAEBD7] rounded-lg font-bold shadow transition flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    จดบันทึกเรื่องราว
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+        <!---------- note ----------->
+
+        <div class="mb-12">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold flex items-center gap-2">
+                <span class="text-[#DAA520]">🗒️</span> โปรเจกต์ของคุณ
+            </h2>
+            {% if notes %}
+            <a href="{% url 'notes:note_list' %}" class="text-sm font-bold text-[#DAA520] hover:text-[#2F4F4F] transition flex items-center gap-1">
+                ดูทั้งหมด
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            </a>
+            {% endif %}
+        </div>
+
+        {% if notes and notes|length > 0 %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for note in notes|slice:":4" %}
+            <a href="{% url 'notes:note_detail' note.id %}" class="group bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition duration-300 overflow-hidden border border-[#2F4F4F]/10 flex flex-col relative h-[320px]"> <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#2F4F4F] to-[#DAA520]"></div>
+
+                <div class="p-6 flex-1 flex flex-col">
+                    <h3 class="font-bold text-xl text-[#2F4F4F] mb-3 group-hover:text-[#DAA520] transition truncate">
+                        {{ note.title|default:'(ไม่มีชื่อ)' }}
+                    </h3>
+                    
+                    <div class="text-sm text-gray-500 leading-relaxed line-clamp-6 mb-4 flex-1 bg-[#FAEBD7]/10 p-3 rounded-lg border border-[#FAEBD7]/30 italic">
+                        "{{ note.content|striptags|default:'ยังไม่มีเนื้อหา...' }}"
+                    </div>
+
+                    <div class="text-xs text-[#2F4F4F]/60 flex justify-between items-center border-t border-gray-100 pt-3 mt-auto">
+                        <div class="flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            {{ note.updated_at|date:"d M H:i" }}
+                        </div>
+                        <span class="text-[#DAA520] font-bold group-hover:underline">เปิดอ่าน →</span>
+                    </div>
+
+                </div>
+            </a>
+
+            {% endfor %}
+            
+            <a href="{% url 'notes:note_form' %}" class="border-2 border-dashed border-[#DAA520]/40 rounded-xl flex flex-col items-center justify-center p-6 text-[#DAA520] hover:bg-[#DAA520]/5 hover:border-[#DAA520] transition cursor-pointer min-h-[320px]">
+                <div class="w-12 h-12 rounded-full bg-[#DAA520]/10 flex items-center justify-center mb-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </div>
+                <span class="font-bold">สร้างโปรเจกต์ใหม่</span>
+            </a>
+        </div>
+        {% else %}
+        <div class="bg-white rounded-xl p-10 text-center border border-[#FAEBD7] shadow-sm">
+            <div class="text-6xl mb-4">🗒️</div>
+            <h3 class="text-xl font-bold text-[#2F4F4F] mb-2">ยังไม่มีโปรเจกต์</h3>
+            <p class="text-gray-500 mb-6">จดบันทึกโปรเจกต์แรกของคุณ เพื่อไม่ให้ความคิดดี ๆ หายไป</p>
+            <a href="{% url 'notes:note_form' %}" class="inline-block px-6 py-2 bg-[#DAA520] text-white rounded-lg font-bold hover:bg-[#b8860b] transition">
+                + สร้างโปรเจกต์ใหม่
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!---------- character ----------->
+
+    <hr class="border-[#2F4F4F]/10 mb-12">
+
+    <div class="mb-12">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold flex items-center gap-2">
+                <span class="text-[#DAA520]">👤</span> ตัวละครของคุณ
+            </h2>
+            {% if characters %}
+            <a href="{% url 'worldbuilding:character_list' %}" class="text-sm font-bold text-[#DAA520] hover:text-[#2F4F4F] transition flex items-center gap-1">
+                ดูทั้งหมด
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            </a>
+            {% endif %}
+        </div>
+
+        {% if characters and characters|length > 0 %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for character in characters|slice:":4" %}
+            <a href="{% url 'worldbuilding:character_detail' character.id %}" class="group bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition duration-300 overflow-hidden border border-[#2F4F4F]/10 flex flex-col h-full">
+                
+                <div class="h-48 overflow-hidden bg-gray-200 relative flex-shrink-0">
+                    {% if character.portrait %}
+                        <img src="{{ character.portrait.url }}" alt="{{ character.name }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    {% else %}
+                        <div class="w-full h-full flex items-center justify-center bg-[#2F4F4F] text-[#FAEBD7] text-4xl">
+                            {{ character.name|slice:":1" }}
+                        </div>
+                    {% endif %}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    <div class="absolute bottom-3 left-3 text-white">
+                         <h3 class="font-bold text-lg leading-tight truncate pr-2">{{ character.name }}</h3>
+                         {% if character.role %}
+                         <span class="text-xs bg-[#DAA520] text-white px-2 py-0.5 rounded-md font-medium">{{ character.role }}</span>
+                         {% endif %}
+                    </div>
+                </div>
+                
+                <div class="p-4 flex-1 flex flex-col justify-between">
+                    <p class="text-sm text-gray-500 line-clamp-2 mb-3">
+                        {{ character.description|default:"ยังไม่มีคำอธิบาย" }}
+                    </p>
+
+                    <div class="text-xs text-[#2F4F4F]/60 flex justify-between items-center border-t border-gray-100 pt-3 mt-auto">
+                        <div class="flex items-center gap-1" title="วันที่สร้าง">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            {{ character.created_at|date:"d M H:i" }}
+                        </div>
+                        <span class="text-[#DAA520] font-bold group-hover:underline">ดูข้อมูล →</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+            
+            <a href="{% url 'worldbuilding:character_create' %}" class="border-2 border-dashed border-[#DAA520]/40 rounded-xl flex flex-col items-center justify-center p-6 text-[#DAA520] hover:bg-[#DAA520]/5 hover:border-[#DAA520] transition cursor-pointer min-h-[250px]">
+                <div class="w-12 h-12 rounded-full bg-[#DAA520]/10 flex items-center justify-center mb-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </div>
+                <span class="font-bold">สร้างตัวละครเพิ่ม</span>
+            </a>
+        </div>
+        {% else %}
+        <div class="bg-white rounded-xl p-10 text-center border border-[#FAEBD7] shadow-sm">
+            <div class="text-6xl mb-4">👤</div>
+            <h3 class="text-xl font-bold text-[#2F4F4F] mb-2">ยังไม่มีตัวละคร</h3>
+            <p class="text-gray-500 mb-6">เริ่มสร้างตัวละครแรกของคุณ เพื่อเติมเต็มโลกใบนี้</p>
+            <a href="{% url 'worldbuilding:character_create' %}" class="inline-block px-6 py-2 bg-[#DAA520] text-white rounded-lg font-bold hover:bg-[#b8860b] transition">
+                + สร้างตัวละคร
+            </a>
+        </div>
+        {% endif %}
+
+    <!---------- location ----------->
+
+    <hr class="border-[#2F4F4F]/10 mb-12">
+
+    <div class="mb-12">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold flex items-center gap-2">
+                <span class="text-[#DAA520]">🗺️</span> สถานที่ของคุณ
+            </h2>
+            {% if locations %}
+            <a href="{% url 'worldbuilding:location_list' %}" class="text-sm font-bold text-[#DAA520] hover:text-[#2F4F4F] transition flex items-center gap-1">
+                ดูทั้งหมด
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            </a>
+            {% endif %}
+        </div>
+        
+        {% if locations and locations|length > 0 %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for location in locations|slice:":4" %}
+            <a href="{% url 'worldbuilding:location_detail' location.id %}" class="group bg-white rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition duration-300 overflow-hidden border border-[#2F4F4F]/10 flex flex-col h-full"> 
+                
+                <div class="h-40 overflow-hidden bg-gray-200 relative flex-shrink-0">
+                    {% if location.map_image %}
+                        <img src="{{ location.map_image.url }}" alt="{{ location.name }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    {% else %}
+                        <div class="w-full h-full flex items-center justify-center bg-[#2F4F4F] text-[#FAEBD7]">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                            </svg>
+                        </div>
+                    {% endif %}
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#2F4F4F]/60 to-transparent opacity-0 group-hover:opacity-100 transition duration-300"></div>
+                </div>
+
+                <div class="p-5 flex-1 flex flex-col">
+                    {% if location.project %}
+                    <div class="mb-2">
+                        <span class="inline-block px-2 py-1 bg-[#FAEBD7] text-[#2F4F4F] text-[10px] font-bold rounded-md border border-[#2F4F4F]/10 truncate max-w-full">
+                            📖 {{ location.project.title|default:"(ไม่มีชื่อเรื่อง)" }}
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    <h3 class="font-bold text-lg text-[#2F4F4F] mb-1 group-hover:text-[#DAA520] transition truncate">
+                        {{ location.name|default:'(ไม่มีชื่อ)' }}
+                    </h3>
+                    
+                    <div class="flex-grow"></div>
+
+                    <div class="text-xs text-[#2F4F4F]/60 flex justify-between items-center border-t border-gray-100 pt-3 mt-4">
+                        <div class="flex items-center gap-1" title="วันที่สร้าง">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            {{ location.created_at|date:"d M H:i" }}
+                        </div>
+                        <span class="text-[#DAA520] font-bold group-hover:underline text-xs">ดูข้อมูล →</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+            
+            <a href="{% url 'worldbuilding:location_create' %}" class="border-2 border-dashed border-[#DAA520]/40 rounded-xl flex flex-col items-center justify-center p-6 text-[#DAA520] hover:bg-[#DAA520]/5 hover:border-[#DAA520] transition cursor-pointer min-h-[250px]">
+                <div class="w-12 h-12 rounded-full bg-[#DAA520]/10 flex items-center justify-center mb-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </div>
+                <span class="font-bold">สร้างสถานที่เพิ่ม</span>
+            </a>
+        </div>
+        {% else %}
+        <div class="bg-white rounded-xl p-10 text-center border border-[#FAEBD7] shadow-sm">
+            <div class="text-6xl mb-4">🗺️</div>
+            <h3 class="text-xl font-bold text-[#2F4F4F] mb-2">ยังไม่มีสถานที่</h3>
+            <p class="text-gray-500 mb-6">เริ่มสร้างสถานที่แรกของคุณ เพื่อเติมเต็มโลกใบนี้</p>
+            <a href="{% url 'worldbuilding:location_create' %}" class="inline-block px-6 py-2 bg-[#DAA520] text-white rounded-lg font-bold hover:bg-[#b8860b] transition">
+                + สร้างสถานที่
+            </a>
+        </div>
+        {% endif %}
+
+  </section>
+</div>
+
+{% endblock %}

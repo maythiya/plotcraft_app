@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}เขียนนิยาย: {{ current_note.title|default:"โน้ตใหม่" }} | PlotCraft{% endblock %}
+
+{% block content %}
+<style>
+    [contenteditable]:empty:before { content: attr(placeholder); color: #9ca3af; display: block; }
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #2F4F4F; border-radius: 4px; }
+    /* ซ่อน Scrollbar ของหน้าหลัก เพื่อให้ Scroll แค่ใน Editor */
+    body { overflow: hidden; } 
+</style>
+
+<div x-data="writerApp()" x-init="initEditor()" class="flex h-[calc(100vh-64px)] bg-[#F5F5F0] overflow-hidden">
+
+    <aside class="w-72 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 z-20 shadow-sm">
+        <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-[#2F4F4F] text-[#FAEBD7]">
+            <span class="font-bold text-lg tracking-wide">📂 นิยาย</span>
+            <a href="{% url 'notes:note_form' %}" class="bg-[#DAA520] hover:bg-[#b8860b] text-white p-1.5 rounded-lg transition shadow-sm" title="สร้างตอนใหม่">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            </a>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+            {% for note in existing_notes %}
+            <a href="{% url 'notes:note_detail' pk=note.id %}" 
+               class="group block p-3 rounded-lg border border-transparent transition-all duration-200
+                      {% if current_note and current_note.id == note.id %} 
+                        bg-[#FAEBD7] border-[#DAA520] shadow-sm 
+                      {% else %} 
+                        hover:bg-gray-50 hover:border-gray-200 
+                      {% endif %}">
+                <div class="font-bold text-[#2F4F4F] text-sm truncate group-hover:text-[#DAA520] transition">
+                    {{ note.title|default:"(ไม่มีชื่อตอน)" }}
+                </div>
+                <div class="text-xs text-gray-400 mt-1 flex justify-between">
+                    <span class="truncate w-2/3">{{ note.content|striptags|truncatechars:20 }}</span>
+                    <span>{{ note.updated_at|date:"d M" }}</span>
+                </div>
+            </a>
+            {% empty %}
+            <div class="text-center py-10 text-gray-400 text-sm">ยังไม่มีตอนที่เขียน</div>
+            {% endfor %}
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col relative min-w-0 bg-[#F5F5F0]">
+        
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0 shadow-sm z-10">
+            <input type="text" x-model="title" placeholder="ใส่ชื่อตอน/ชื่อฉาก..." 
+                   class="flex-1 text-xl font-bold text-[#2F4F4F] placeholder-gray-300 border-none focus:ring-0 bg-transparent"
+                   @input="markUnsaved()">
+            
+            <div class="flex items-center gap-3">
+                <span x-text="statusMessage" class="text-xs font-medium transition-colors duration-300" :class="isSaved ? 'text-green-600' : 'text-orange-400'"></span>
+                
+                <button @click="saveNote()" class="flex items-center gap-2 bg-[#2F4F4F] hover:bg-[#1a3030] text-[#FAEBD7] px-5 py-2 rounded-full font-bold text-sm shadow-md transition hover:scale-105">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    <span>บันทึก</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="h-10 bg-gray-50 border-b border-gray-200 flex items-center px-6 gap-2 flex-shrink-0 select-none text-gray-600">
+            <button @click="format('bold')" class="p-1 hover:bg-gray-200 rounded" title="ตัวหนา"><b>B</b></button>
+            <button @click="format('italic')" class="p-1 hover:bg-gray-200 rounded italic" title="ตัวเอียง">I</button>
+            <button @click="format('underline')" class="p-1 hover:bg-gray-200 rounded underline" title="ขีดเส้นใต้">U</button>
+            <div class="w-px h-4 bg-gray-300 mx-2"></div>
+            <button @click="format('justifyLeft')" class="p-1 hover:bg-gray-200 rounded">Left</button>
+            <button @click="format('justifyCenter')" class="p-1 hover:bg-gray-200 rounded">Center</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto cursor-text" @click="$refs.editor.focus()">
+            <div class="max-w-3xl mx-auto py-12 px-8 min-h-full bg-white shadow-sm my-4">
+                <div x-ref="editor" 
+                     contenteditable="true" 
+                     class="outline-none text-lg leading-relaxed text-gray-800 min-h-[60vh]"
+                     placeholder="เริ่มบรรเลงเรื่องราวของคุณที่นี่..."
+                     @input="onInput()">
+                     {{ current_note.content|safe }}
+                </div>
+            </div>
+        </div>
+
+        <footer class="h-8 bg-white border-t border-gray-200 flex items-center justify-between px-6 text-xs text-gray-500 flex-shrink-0">
+            <div class="flex gap-4">
+                <span class="flex items-center gap-1">
+                    คำ: <b class="text-[#2F4F4F]" x-text="wordCount">0</b>
+                </span>
+                <span class="flex items-center gap-1">
+                    อักขระ: <b class="text-[#2F4F4F]" x-text="charCount">0</b>
+                </span>
+            </div>
+            <div>PlotCraft Editor v2.0</div>
+        </footer>
+
+        <form id="django-form" method="POST" class="hidden">
+            {% csrf_token %}
+            {% if current_note %}<input type="hidden" name="note_id" value="{{ current_note.id }}">{% endif %}
+            <input type="hidden" name="title" x-model="title">
+            <input type="hidden" name="content" x-model="content">
+        </form>
+
+    </main>
+</div>
+
+<script>
+    function writerApp() {
+        return {
+            title: "{{ current_note.title|escapejs }}",
+            content: "",
+            wordCount: 0,
+            charCount: 0,
+            isSaved: true,
+            statusMessage: "พร้อมเขียน",
+            
+            initEditor() {
+                // โหลดเนื้อหาเริ่มต้น
+                this.content = this.$refs.editor.innerHTML;
+                this.countStats();
+            },
+
+            format(command) {
+                document.execCommand(command, false, null);
+                this.$refs.editor.focus();
+            },
+
+            markUnsaved() {
+                this.isSaved = false;
+                this.statusMessage = "• มีการแก้ไข";
+            },
+
+            onInput() {
+                this.content = this.$refs.editor.innerHTML;
+                this.countStats();
+                this.markUnsaved();
+            },
+
+            // ฟังก์ชันนับคำไทย (ใช้ Intl.Segmenter)
+            countStats() {
+                const text = this.$refs.editor.innerText || "";
+                
+                // 1. นับตัวอักษร
+                this.charCount = text.length;
+
+                // 2. นับคำ (ไทย + อังกฤษ)
+                if (window.Intl && Intl.Segmenter) {
+                    const segmenter = new Intl.Segmenter('th', { granularity: 'word' });
+                    const segments = segmenter.segment(text);
+                    let count = 0;
+                    for (const segment of segments) {
+                        if (segment.isWordLike) count++;
+                    }
+                    this.wordCount = count;
+                } else {
+                    // Fallback สำหรับ Browser เก่า
+                    this.wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+                }
+            },
+
+            saveNote() {
+                this.statusMessage = "กำลังบันทึก...";
+                
+                // เอาค่าใส่ Form แล้ว Submit แบบปกติ (เพื่อให้ง่ายต่อ Backend เดิม)
+                // หรือถ้าคุณอยากใช้ AJAX/Fetch ก็แก้ตรงนี้ได้
+                document.getElementById('django-form').submit();
+            }
+        }
+    }
+</script>
+{% endblock %}

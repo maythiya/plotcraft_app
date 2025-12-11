@@ -1,0 +1,8 @@
+django>=4.2
+mysqlclient
+django-htmx
+djangorestframework
+python-dotenv==1.0.1
+Pillow
+django-browser-reload==1.19.0
+django-tailwind==4.2.0

@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  mysql_db:
+    image: mysql:8.0
+    container_name: mysql_db
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      retries: 10
+
+  web:
+    build: .
+    # ก่อนรัน Django ให้แน่ใจว่า CSS ของ Tailwind ถูกคอมไพล์ (กรณีมีการ bind-mount โค้ดจากโฮสต์)
+    # คำสั่งนี้จะพยายามติดตั้ง node deps และ build CSS (ถ้าจำเป็น) แล้ว collectstatic และ migrate
+    command: sh -c "if [ -f package.json ]; then npm ci --silent || true; npm run build --silent || true; fi && python manage.py collectstatic --noinput || true && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - .:/app
+    depends_on:
+        mysql_db:
+          condition: service_healthy
+        chroma_db:
+          condition: service_started
+
+  chroma_db:
+    image: chromadb/chroma:0.5.23
+    environment:
+      - ALLOW_RESET=true
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/.chroma
+
+volumes:
+  mysql_data:
+  chroma_data:
