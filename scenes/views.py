@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
 
-from notes.models import Note
+from notes.models import Novel
 from .forms import SceneForm
 from .models import Scene
 
@@ -11,13 +11,13 @@ from .models import Scene
 # ----------------------------------------------------------------------
 @login_required
 def scene_list(request):
-    # 1. ดึง Project (Note) ทั้งหมดของผู้ใช้ เพื่อเอาไปทำปุ่มเลือก
-    projects = Note.objects.filter(author=request.user)
+    # 1. ดึง Novel ทั้งหมดของผู้ใช้ เพื่อเอาไปทำปุ่มเลือก
+    projects = Novel.objects.filter(author=request.user)
     
     # 2. เริ่มต้นดึงฉากทั้งหมดมาก่อน
     scenes = Scene.objects.filter(created_by=request.user).order_by('order')
     
-    # 3. ตรวจสอบว่ามีการเลือก Project มาไหม? (จาก URL ?project=...)
+    # 3. ตรวจสอบว่ามีการเลือก Novel มาไหม? (จาก URL ?project=...)
     selected_project_id = request.GET.get('project')
     selected_project = None
 

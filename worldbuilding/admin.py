@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Character, Location
+from .models import Character, Location, Item
 
 # กำหนดค่า AdminSite เบื้องต้น (ถ้าต้องการปรับ header/title ของหน้า admin)
 class WorldbuildingAdmin(admin.AdminSite):
@@ -37,6 +37,15 @@ class CharacterAdmin(admin.ModelAdmin):
 class LocationAdmin(admin.ModelAdmin):
     list_display = ('project', 'name', 'world_type', 'created_at', 'created_by')
     list_filter = ('project', 'world_type', 'created_at')
+    search_fields = ('name', 'project__name')
+    readonly_fields = ('created_at',)
+    date_hierarchy = 'created_at'
+    ordering = ('-created_at',)
+
+@admin.register(Item)
+class ItemAdmin(admin.ModelAdmin):
+    list_display = ('project', 'name', 'category', 'created_at', 'created_by')
+    list_filter = ('project', 'category', 'created_at')
     search_fields = ('name', 'project__name')
     readonly_fields = ('created_at',)
     date_hierarchy = 'created_at'

@@ -3,11 +3,11 @@ from django.contrib.auth import login, logout
 from django.db.models import Q
 
 from worldbuilding.models import Character, Location, Item
-from notes.models import Note
+from notes.models import Novel
 from scenes.models import Scene
 from timeline.models import TimelineEvent
 
-from .forms import UserForm, RegisterForm
+from .forms import UserForm, RegisterForm, ProfileForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
@@ -21,16 +21,16 @@ def home(request):
     max_items = 3
     if request.user.is_authenticated:
         characters = Character.objects.filter(created_by=request.user).order_by('-created_at')[:max_items]
-        notes = Note.objects.filter(author=request.user).order_by('-created_at')[:max_items]
+        novels = Novel.objects.filter(author=request.user).order_by('-updated_at')[:max_items]
         locations = Location.objects.filter(created_by=request.user).order_by('-created_at')[:max_items]
     else:
         characters = Character.objects.all().order_by('-created_at')[:max_items]
-        notes = Note.objects.all().order_by('-created_at')[:max_items]
+        novels = Novel.objects.all().order_by('-updated_at')[:max_items]
         locations = Location.objects.all().order_by('-created_at')[:max_items]
 
     return render(request, 'home.html', {
         'characters': characters,
-        'notes': notes,
+        'novels': novels,
         'locations': locations,
     })
 
@@ -55,33 +55,28 @@ def register(request):
 
 @login_required
 def profile(request):
-    user = request.user
-
-    if request.method == "POST":
-        # 1. เช็คเรื่องการลบบัญชีก่อน (เพราะถ้าลบแล้วไม่ต้องทำอย่างอื่น)
-        if "delete_account" in request.POST:
-            user.delete()
+    if request.method == 'POST':
+        if 'delete_account' in request.POST:
+            user = request.user
             logout(request)
-            return redirect("landing")
+            user.delete()
+            return redirect('landing')
 
-        # 2. [แก้ตรงนี้] สร้างตัวแปร form รอไว้เลย สำหรับทุกกรณีที่เป็น POST
-        # เพื่อป้องกัน UnboundLocalError
-        form = UserForm(request.POST, instance=user)
+        # รับข้อมูลทั้ง 2 ฟอร์ม
+        u_form = UserForm(request.POST, instance=request.user)
+        p_form = ProfileForm(request.POST, request.FILES, instance=request.user.profile) # เพิ่ม request.FILES
 
-        # 3. เช็คว่ากดปุ่ม save หรือไม่
-        if "save_changes" in request.POST:
-            if form.is_valid():
-                form.save()
-                messages.success(request, "Profile updated successfully!")
-                return redirect("profile")
-            
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+            messages.success(request, 'บันทึกข้อมูลสำเร็จ')
+            return redirect('profile')
     else:
-        # กรณีเป็น GET request
-        form = UserForm(instance=user)
+        u_form = UserForm(instance=request.user)
+        p_form = ProfileForm(instance=request.user.profile)
 
-    return render(request, "profile.html", {
-        "form": form,
-    })
+    # ส่งทั้ง u_form และ p_form ไปที่หน้าเว็บ
+    return render(request, 'profile.html', {'u_form': u_form, 'p_form': p_form})
 
 @login_required
 def global_search(request):
@@ -89,9 +84,9 @@ def global_search(request):
     results = {}
     
     if query:
-        # 1. ค้นหาใน โปรเจกต์ (Notes)
-        results['projects'] = Note.objects.filter(
-            Q(title__icontains=query) | Q(content__icontains=query),
+        # 1. ค้นหาใน โปรเจกต์ (Novels)
+        results['projects'] = Novel.objects.filter(
+            Q(title__icontains=query) | Q(synopsis__icontains=query),
             author=request.user
         )
 
@@ -147,4 +142,5 @@ def global_search(request):
         )
 
     return render(request, 'search_results.html', {'query': query, 'results': results})
+
 

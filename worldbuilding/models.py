@@ -5,10 +5,10 @@
 
 from django.db import models
 from django.conf import settings
-from notes.models import Note
+from notes.models import Novel
 
 class Character(models.Model):
-    project = models.ForeignKey(Note, on_delete=models.CASCADE, related_name='characters', null=True, blank=True)
+    project = models.ForeignKey(Novel, on_delete=models.CASCADE, related_name='characters', null=True, blank=True)
 
     # Basic identity
     name = models.CharField(max_length=200)
@@ -71,7 +71,7 @@ class Character(models.Model):
     
 class Location(models.Model):
     # เชื่อมกับ Project (Note)
-    project = models.ForeignKey(Note, on_delete=models.SET_NULL, null=True, blank=True, related_name='locations')
+    project = models.ForeignKey(Novel, on_delete=models.SET_NULL, null=True, blank=True, related_name='locations')
     
     # ข้อมูลพื้นฐาน
     name = models.CharField(max_length=200)
@@ -115,7 +115,7 @@ class Item(models.Model):
     ]
 
     # Link Note (Project)
-    project = models.ForeignKey(Note, on_delete=models.SET_NULL, null=True, blank=True, related_name='items')
+    project = models.ForeignKey(Novel, on_delete=models.SET_NULL, null=True, blank=True, related_name='items')
     
     # Basic Info
     name = models.CharField(max_length=200)

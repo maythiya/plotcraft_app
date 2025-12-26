@@ -12,11 +12,10 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import Character, Item, Location
 from .forms import CharacterForm, ItemForm, LocationForm
 
-from myapp.models import Project
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
-from notes.models import Note  # ใช้สำหรับดึง Project/Note ในการ Pre-select
+from notes.models import Novel  # ใช้สำหรับดึง Novel ในการ Pre-select
 
 
 def overview(request):
@@ -68,8 +67,8 @@ def character_create(request):
         project_id = request.GET.get('project')
         if project_id:
             try:
-                initial['project'] = Project.objects.get(id=project_id)
-            except Project.DoesNotExist:
+                initial['project'] = Novel.objects.get(id=project_id, author=request.user)
+            except Novel.DoesNotExist:
                 pass
         form = CharacterForm(request.user, initial=initial)
     return render(request, 'worldbuilding/character_form.html', {'form': form})
@@ -142,14 +141,14 @@ def location_create(request):
             messages.success(request, f"สร้างสถานที่ '{location.name}' เรียบร้อยแล้ว")
             return redirect('worldbuilding:location_detail', pk=location.id)
     else:
-        # รองรับการส่ง ?project=<id> มาทาง URL เพื่อเลือก Project อัตโนมัติ
+        # รองรับการส่ง ?project=<id> มาทาง URL เพื่อเลือก Novel อัตโนมัติ
         initial = {}
         project_id = request.GET.get('project')
         if project_id:
             try:
-                # ตรวจสอบด้วยว่า Note นั้นเป็นของ User จริงๆ
-                initial['project'] = Note.objects.get(id=project_id, author=request.user)
-            except Note.DoesNotExist:
+                # ตรวจสอบด้วยว่า Novel นั้นเป็นของ User จริงๆ
+                initial['project'] = Novel.objects.get(id=project_id, author=request.user)
+            except Novel.DoesNotExist:
                 pass
         
         # ส่ง request.user เข้าไปเพื่อกรอง Dropdown

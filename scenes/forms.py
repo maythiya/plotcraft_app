@@ -1,4 +1,4 @@
-from notes.models import Note
+from notes.models import Novel
 from .models import Scene
 from django import forms
 from worldbuilding.models import Character, Item, Location
@@ -16,8 +16,8 @@ class SceneForm(forms.ModelForm):
     def __init__(self, user, *args, **kwargs):
         super(SceneForm, self).__init__(*args, **kwargs)
         
-        #กรองเอาเฉพาะ Note ที่เป็นประเภท 'project' ของ User คนนั้น
-        self.fields['project'].queryset = Note.objects.filter(
+        #กรองเอาเฉพาะ Novel ของ User คนนั้น
+        self.fields['project'].queryset = Novel.objects.filter(
             author=user, 
         )
 

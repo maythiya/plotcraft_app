@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Writing: {{ chapter.title }}{% endblock %}
+
+{% block content %}
+<style> 
+
+    body { overflow: hidden; background-color: #F0F2F5; }
+
+    [contenteditable]:empty:before { content: attr(placeholder); color: #9ca3af; display: block; font-style: italic; }
+    
+    /* Toolbar Button Styles */
+    .tool-btn { @apply p-2 rounded-lg text-gray-500 transition-all duration-200 hover:bg-[#DAA520]/10 hover:text-[#DAA520] hover:scale-110; }
+    .tool-btn.active { @apply bg-[#DAA520] text-white shadow-md transform scale-105; }
+
+    /* --- Scrollbar ขั้นเทพ --- */
+    /* 1. ปกติซ่อนหัว Scrollbar ไว้ (สีใส) */
+    .smart-scroll::-webkit-scrollbar { width: 4px; /* ขนาดเล็กจิ๋ว */ }
+    .smart-scroll::-webkit-scrollbar-track { background: transparent; margin: 4px 0; }
+    .smart-scroll::-webkit-scrollbar-thumb { 
+        background-color: transparent; 
+        border-radius: 20px; 
+        transition: background-color 0.3s ease; 
+    }
+
+    /* 2. เมื่อมีคลาส .scrolling (ตอนเลื่อน) ให้โชว์สี */
+    .smart-scroll.scrolling::-webkit-scrollbar-thumb { background-color: #cbd5e1; }
+    
+    /* 3. หรือเอาเมาส์ไปชี้แถวๆ นั้นก็ให้โชว์ */
+    .smart-scroll:hover::-webkit-scrollbar-thumb { background-color: #e2e8f0; }
+
+    /* Animation */
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .paper-enter { animation: slideUp 0.7s ease-out forwards; opacity: 0; }
+</style>
+
+<div class="h-screen overflow-hidden bg-[#F0F2F5] flex flex-col font-sans relative" x-data="writerApp()">
+    
+    <header class="flex-none bg-white/80 backdrop-blur-md border-b border-gray-200/80 px-4 md:px-8 py-3 flex items-center justify-between z-50 shadow-sm">
+        <div class="flex items-center gap-4 flex-1">
+            <a href="{% url 'notes:novel_detail' novel.id %}" class="group flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 text-gray-400 hover:text-[#2F4F4F] transition-all">
+                <svg class="w-6 h-6 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            </a>
+            <div class="h-8 w-px bg-gray-200 mx-2"></div>
+            <div class="flex-1 max-w-xl">
+                <div class="text-[10px] text-[#DAA520] font-bold uppercase tracking-wider mb-0.5">{{ novel.title }}</div>
+                <input type="text" x-model="title" class="font-bold text-[#2F4F4F] text-xl bg-transparent w-full border-none p-0 focus:ring-0 placeholder-gray-300 hover:opacity-80 transition" placeholder="ตั้งชื่อตอน...">
+            </div>
+        </div>
+        <div class="flex items-center gap-4 md:gap-6">
+            <div class="text-right hidden sm:block">
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-bold">Word Count</div>
+                <div class="flex items-baseline justify-end gap-1">
+                    <span x-text="wordCount" class="font-extrabold text-[#2F4F4F] text-lg">0</span>
+                    <span class="text-xs text-gray-400">คำ</span>
+                </div>
+            </div>
+            <button @click="saveContent()" class="group relative overflow-hidden bg-[#2F4F4F] text-[#FAEBD7] px-6 py-2.5 rounded-full font-bold shadow-lg hover:shadow-xl hover:bg-[#1a3030] transition-all transform active:scale-95 flex items-center gap-2">
+                <span class="relative z-10 flex items-center gap-2">
+                    <svg x-show="!isSaving" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    <span x-text="isSaving ? 'Saving...' : 'บันทึก'"></span>
+                </span>
+                <div class="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-12"></div>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex-none z-40 flex justify-center py-4 pointer-events-none bg-[#F0F2F5]">
+        <div class="bg-white/90 backdrop-blur shadow-lg border border-gray-100 rounded-xl px-6 py-3 flex gap-3 pointer-events-auto transform hover:scale-105 transition-transform duration-300">
+            <button type="button" @click="format('bold')" class="tool-btn bold"><span class="font-bold">B</span></button>
+            <button type="button" @click="format('italic')" class="tool-btn italic"><span class="italic font-serif">I</span></button>
+            <button type="button" @click="format('underline')" class="tool-btn underline"><span class="underline">U</span></button>
+            <div class="w-px h-6 bg-gray-200 mx-2 self-center"></div>
+            <button type="button" @click="format('justifyLeft')" class="tool-btn justifyLeft"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h16"></path></svg></button>
+            <button type="button" @click="format('justifyCenter')" class="tool-btn justifyCenter"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M7 12h10M4 18h16"></path></svg></button>
+            <button type="button" @click="format('justifyRight')" class="tool-btn justifyRight"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M10 12h10M4 18h16"></path></svg></button>
+        </div>
+    </div>
+
+    <main class="flex-1 flex flex-col items-center justify-start overflow-hidden px-4 pb-8 w-full">
+        
+        <div class="bg-white shadow-xl shadow-gray-200/50 rounded-lg w-full max-w-3xl h-full border border-gray-50 relative paper-enter flex flex-col">
+            
+            <div x-ref="scrollContainer"
+                 @scroll="handleScroll"
+                 class="smart-scroll flex-1 overflow-y-auto px-8 md:px-16 py-12 relative"
+                 @click="$refs.editor.focus()">
+                 
+                 <div x-ref="editor"
+                     contenteditable="true"
+                     class="outline-none text-lg leading-loose text-gray-800 font-serif min-h-full selection:bg-[#DAA520]/30"
+                     placeholder="เริ่มบรรเลงจินตนาการของคุณที่นี่..."
+                     @input="updateStats()"
+                     @mouseup="checkActiveButtons()"
+                     @keyup="checkActiveButtons()"
+                     @keydown.cmd.b.prevent="format('bold')"
+                     @keydown.ctrl.b.prevent="format('bold')">
+                     {{ chapter.content|safe }}
+                </div>
+                
+                <div class="h-20"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <form id="saveForm" method="POST" class="hidden">
+        {% csrf_token %}
+        <input type="hidden" name="title" x-model="title">
+        <input type="hidden" name="content" x-model="content">
+    </form>
+</div>
+
+<script>
+    function writerApp() {
+        return {
+            title: "{{ chapter.title|escapejs }}",
+            content: `{{ chapter.content|safe }}`,
+            charCount: 0,
+            wordCount: 0,
+            isSaving: false,
+            scrollTimeout: null, // ตัวช่วยจับเวลา Scrollbar
+
+            init() {
+                this.updateStats();
+                this.checkActiveButtons();
+            },
+
+            // ฟังก์ชันจัดการ Scrollbar: เลื่อนปุ๊บโชว์ หยุดปุ๊บซ่อน
+            handleScroll() {
+                const container = this.$refs.scrollContainer;
+                container.classList.add('scrolling'); // ใส่คลาสให้โชว์
+                
+                // เคลียร์เวลาเก่า (ถ้ายังเลื่อนอยู่ก็นับใหม่)
+                clearTimeout(this.scrollTimeout);
+                
+                // อีก 1 วินาทีถ้าไม่เลื่อนแล้ว ให้ลบคลาสออก (ซ่อน)
+                this.scrollTimeout = setTimeout(() => {
+                    container.classList.remove('scrolling');
+                }, 1000);
+            },
+
+            format(cmd, val=null) {
+                document.execCommand(cmd, false, val);
+                this.$refs.editor.focus();
+                this.updateStats();
+                this.checkActiveButtons();
+            },
+            
+            checkActiveButtons() {
+                const buttons = ['bold', 'italic', 'underline', 'justifyLeft', 'justifyCenter', 'justifyRight'];
+                buttons.forEach(cmd => {
+                    const btn = document.querySelector(`.tool-btn.${cmd}`);
+                    if (btn) document.queryCommandState(cmd) ? btn.classList.add('active') : btn.classList.remove('active');
+                });
+            },
+
+            updateStats() {
+                const el = this.$refs.editor;
+                this.content = el.innerHTML;
+                const text = el.innerText || "";
+                this.charCount = text.replace(/\s/g, '').length;
+                this.wordCount = text.trim() ? text.split(/\s+/).length : 0;
+            },
+
+            saveContent() {
+                if (this.isSaving) return;
+                this.isSaving = true;
+                document.querySelector('input[name="title"]').value = this.title;
+                document.querySelector('input[name="content"]').value = this.$refs.editor.innerHTML;
+                document.getElementById('saveForm').submit();
+            }
+            
+        }
+    }
+</script>
+{% endblock %}

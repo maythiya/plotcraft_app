@@ -1,6 +1,6 @@
 from django import forms
 from .models import Timeline, TimelineEvent
-from notes.models import Note
+from notes.models import Novel
 from worldbuilding.models import Character
 from scenes.models import Scene
 
@@ -18,7 +18,7 @@ class TimelineForm(forms.ModelForm):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         if user:
-            self.fields['related_project'].queryset = Note.objects.filter(author=user)
+            self.fields['related_project'].queryset = Novel.objects.filter(author=user)
 
 # ฟอร์มสร้างเหตุการณ์ (ตัวนี้แหละที่ขาดไป!)
 class EventForm(forms.ModelForm):

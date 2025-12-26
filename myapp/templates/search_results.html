@@ -2,34 +2,51 @@
 {% block title %}ผลการค้นหา: {{ query }} | PlotCraft{% endblock %}
 
 {% block content %}
-<div class="min-h-screen py-12 px-4 font-sans text-[#2F4F4F]">
-    <div class="max-w-5xl mx-auto">
+<style>
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in-up { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; }
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+</style>
+
+<div class="min-h-screen py-12 px-4 font-sans text-[#2F4F4F] bg-[#F8F9FA]">
+    <div class="max-w-6xl mx-auto">
         
-        <div class="mb-10 border-b border-[#2F4F4F]/10 pb-6">
-            <h1 class="text-3xl font-bold mb-2">🔍 ผลการค้นหาสำหรับ "{{ query }}"</h1>
+        <div class="mb-12 border-b border-[#2F4F4F]/10 pb-8 text-center fade-in-up">
+            <span class="text-6xl mb-4 block">🔍</span>
+            <h1 class="text-3xl md:text-4xl font-extrabold mb-3">ผลการค้นหาสำหรับ "<span class="text-[#DAA520]">{{ query }}</span>"</h1>
             <p class="text-gray-500">
                 {% if results.projects or results.characters or results.scenes or results.timeline_events %}
-                    พบข้อมูลที่ตรงกันดังนี้...
+                    พบข้อมูลในจักรวาลของคุณดังนี้...
                 {% else %}
-                    ไม่พบข้อมูลที่ตรงกัน ลองใช้คำค้นหาอื่นดูนะ
+                    จักรวาลเงียบเหงา... ไม่พบข้อมูลที่ตรงกัน
                 {% endif %}
             </p>
         </div>
 
-        <div class="space-y-10">
+        <div class="space-y-16">
 
             {% if results.projects %}
-            <section>
-                <h2 class="text-xl font-bold text-[#DAA520] mb-4 flex items-center gap-2">
-                    📘 นิยาย / โปรเจกต์ <span class="bg-[#DAA520]/20 text-[#DAA520] text-xs px-2 py-1 rounded-full">{{ results.projects.count }}</span>
+            <section class="fade-in-up delay-100">
+                <h2 class="text-2xl font-bold text-[#2F4F4F] mb-6 flex items-center gap-3">
+                    <span class="bg-[#2F4F4F]/10 p-2 rounded-lg">📚</span> นิยาย / โปรเจกต์ 
+                    <span class="bg-[#DAA520] text-white text-xs px-2 py-1 rounded-full">{{ results.projects.count }}</span>
                 </h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {% for project in results.projects %}
-                    <a href="{% url 'notes:note_detail' project.id %}" class="bg-white p-5 rounded-xl shadow-sm hover:shadow-md transition flex items-start gap-4 border border-transparent hover:border-[#DAA520]">
-                        <div class="p-3 bg-[#2F4F4F]/10 rounded-lg text-2xl">📖</div>
-                        <div>
-                            <h4 class="font-bold text-lg">{{ project.title }}</h4>
-                            <p class="text-sm text-gray-500 line-clamp-2 mt-1">{{ project.content|striptags }}</p>
+                    <a href="{% url 'notes:novel_detail' project.id %}" class="flex bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all border border-gray-100 group h-32">
+                        <div class="w-24 bg-gray-200 flex-shrink-0 relative overflow-hidden">
+                            {% if project.cover_image %}
+                                <img src="{{ project.cover_image.url }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            {% else %}
+                                <div class="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100"><span class="text-2xl">📖</span></div>
+                            {% endif %}
+                        </div>
+                        <div class="p-4 flex flex-col justify-center">
+                            <h3 class="font-bold text-lg text-[#2F4F4F] group-hover:text-[#DAA520] transition-colors line-clamp-1">{{ project.title }}</h3>
+                            <p class="text-xs text-gray-400 mt-1 line-clamp-2">{{ project.synopsis|default:"ไม่มีคำโปรย" }}</p>
                         </div>
                     </a>
                     {% endfor %}
@@ -38,60 +55,46 @@
             {% endif %}
 
             {% if results.characters %}
-            <section>
-                <h2 class="text-xl font-bold text-[#DAA520] mb-4 flex items-center gap-2">
-                    🎭 ตัวละคร <span class="bg-[#DAA520]/20 text-[#DAA520] text-xs px-2 py-1 rounded-full">{{ results.characters.count }}</span>
+            <section class="fade-in-up delay-200">
+                <h2 class="text-2xl font-bold text-[#2F4F4F] mb-6 flex items-center gap-3">
+                    <span class="bg-blue-100 text-blue-600 p-2 rounded-lg">👤</span> ตัวละคร
+                    <span class="bg-[#DAA520] text-white text-xs px-2 py-1 rounded-full">{{ results.characters.count }}</span>
                 </h2>
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     {% for char in results.characters %}
-                    <a href="{% url 'worldbuilding:character_detail' char.id %}" class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition text-center border border-transparent hover:border-[#DAA520] group">
-                        {% if char.portrait %}
-                            <img src="{{ char.portrait.url }}" class="w-16 h-16 rounded-full object-cover mx-auto mb-3 group-hover:scale-110 transition">
-                        {% else %}
-                            <div class="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mx-auto mb-3 text-2xl font-bold text-[#2F4F4F]">{{ char.name|slice:":1" }}</div>
-                        {% endif %}
-                        <h4 class="font-bold text-[#2F4F4F]">{{ char.name }}</h4>
+                    <a href="{{ char.get_absolute_url }}" class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-all hover:-translate-y-1 border border-gray-100 flex flex-col items-center text-center group">
+                        <div class="w-16 h-16 rounded-full bg-gray-100 mb-3 overflow-hidden ring-2 ring-transparent group-hover:ring-[#DAA520]/30 transition-all">
+                             {% if char.image %}
+                                <img src="{{ char.image.url }}" class="w-full h-full object-cover">
+                            {% else %}
+                                <div class="w-full h-full flex items-center justify-center text-gray-300 text-xl">{{ char.name|slice:":1" }}</div>
+                            {% endif %}
+                        </div>
+                        <h4 class="font-bold text-[#2F4F4F] text-sm group-hover:text-[#DAA520] line-clamp-1">{{ char.name }}</h4>
+                        <span class="text-[10px] text-gray-400 uppercase mt-1">{{ char.role|default:"Character" }}</span>
                     </a>
                     {% endfor %}
                 </div>
             </section>
             {% endif %}
 
-            {% if results.scenes %}
-            <section>
-                <h2 class="text-xl font-bold text-[#DAA520] mb-4 flex items-center gap-2">
-                    🎬 ฉาก <span class="bg-[#DAA520]/20 text-[#DAA520] text-xs px-2 py-1 rounded-full">{{ results.scenes.count }}</span>
+            {% if results.scenes %} <section class="fade-in-up delay-300">
+                <h2 class="text-2xl font-bold text-[#2F4F4F] mb-6 flex items-center gap-3">
+                    <span class="bg-green-100 text-green-600 p-2 rounded-lg">🗺️</span> สถานที่
+                    <span class="bg-[#DAA520] text-white text-xs px-2 py-1 rounded-full">{{ results.scenes.count }}</span>
                 </h2>
-                <div class="grid grid-cols-1 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {% for scene in results.scenes %}
-                    <a href="{% url 'scenes:scene_edit' scene.id %}" class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition border-l-4 border-[#2F4F4F] flex justify-between items-center group">
-                        <div>
-                            <h4 class="font-bold text-[#2F4F4F] group-hover:text-[#DAA520] transition">{{ scene.title }}</h4>
-                            <div class="text-xs text-gray-400 mt-1">ในเรื่อง: {{ scene.project.title }}</div>
+                    <a href="{{ scene.get_absolute_url }}" class="block group relative rounded-xl overflow-hidden h-40 shadow-sm hover:shadow-lg transition-all">
+                        {% if scene.image %}
+                            <img src="{{ scene.image.url }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                        {% else %}
+                            <div class="w-full h-full bg-[#2F4F4F] flex items-center justify-center text-[#FAEBD7] opacity-80">🗺️</div>
+                        {% endif %}
+                        <div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-end p-4">
+                            <h4 class="text-white font-bold text-lg shadow-black drop-shadow-md">{{ scene.name }}</h4>
                         </div>
-                        <span class="text-gray-300 group-hover:translate-x-1 transition">→</span>
-                    </a>
-                    {% endfor %}
-                </div>
-            </section>
-            {% endif %}
-
-            {% if results.timeline_events %}
-            <section>
-                <h2 class="text-xl font-bold text-[#DAA520] mb-4 flex items-center gap-2">
-                    ⏳ ไทม์ไลน์ <span class="bg-[#DAA520]/20 text-[#DAA520] text-xs px-2 py-1 rounded-full">{{ results.timeline_events.count }}</span>
-                </h2>
-                <div class="space-y-3">
-                    {% for event in results.timeline_events %}
-                    <a href="{% url 'timeline:timeline_detail' event.timeline.id %}" class="block bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition pl-12 relative border border-gray-100 hover:border-[#DAA520]">
-                        <div class="absolute left-5 top-0 bottom-0 w-0.5 bg-[#2F4F4F]/20"></div>
-                        <div class="absolute left-[17px] top-6 w-2 h-2 rounded-full bg-[#DAA520]"></div>
-                        
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="text-xs font-bold bg-[#2F4F4F] text-[#FAEBD7] px-2 py-0.5 rounded">{{ event.time_label }}</span>
-                            <span class="text-xs text-gray-400">ใน Timeline: {{ event.timeline.title }}</span>
-                        </div>
-                        <h4 class="font-bold text-[#2F4F4F]">{{ event.title }}</h4>
                     </a>
                     {% endfor %}
                 </div>
@@ -101,12 +104,13 @@
         </div>
 
         {% if not results.projects and not results.characters and not results.scenes and not results.timeline_events %}
-        <div class="text-center py-20">
-            <div class="inline-block p-6 rounded-full bg-[#2F4F4F]/5 mb-4">
-                <span class="text-5xl">🌌</span>
+        <div class="text-center py-20 fade-in-up delay-100">
+            <div class="inline-block p-6 rounded-full bg-[#2F4F4F]/5 mb-6 animate-bounce">
+                <span class="text-5xl grayscale opacity-50">🌌</span>
             </div>
-            <h3 class="text-xl font-bold text-gray-500">ว่างเปล่า...</h3>
-            <p class="text-gray-400">เราค้นทั่วจักรวาลแล้ว แต่ไม่พบสิ่งที่คุณตามหา</p>
+            <h3 class="text-xl font-bold text-gray-600 mb-2">ว่างเปล่า...</h3>
+            <p class="text-gray-400 mb-8">ลองใช้คำค้นหาอื่น หรือเริ่มสร้างจักรวาลของคุณเอง</p>
+            <a href="{% url 'home' %}" class="px-6 py-2 bg-[#2F4F4F] text-white rounded-lg hover:bg-[#1a3030] transition shadow-md">กลับหน้าหลัก</a>
         </div>
         {% endif %}
 

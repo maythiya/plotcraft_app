@@ -6,7 +6,7 @@
 # - เมื่อใช้ฟอร์มใน view ต้องส่ง `request.FILES` ด้วย ถ้ามีการอัปโหลดรูป (portrait)
 
 from django import forms
-from notes.models import Note
+from notes.models import Novel
 from .models import Character, Location, Item
 
 # ---------------------------------------------------------
@@ -25,8 +25,8 @@ class CharacterForm(forms.ModelForm):
     def __init__(self, user, *args, **kwargs):
         super(CharacterForm, self).__init__(*args, **kwargs)
         
-        #กรองเอาเฉพาะ Note ที่เป็นประเภท 'project' ของ User คนนั้น
-        self.fields['project'].queryset = Note.objects.filter(
+        #กรองเอาเฉพาะ Novel (project) ของ User คนนั้น
+        self.fields['project'].queryset = Novel.objects.filter(
             author=user, 
         )
         
@@ -83,7 +83,7 @@ class LocationForm(forms.ModelForm):
         super(LocationForm, self).__init__(*args, **kwargs)
         
         #กรอง Project ให้เห็นแค่ของ User
-        self.fields['project'].queryset = Note.objects.filter(author=user)
+        self.fields['project'].queryset = Novel.objects.filter(author=user)
         
         #กรอง Character ให้เห็นแค่ของ User
         self.fields['residents'].queryset = Character.objects.filter(created_by=user)
@@ -121,7 +121,7 @@ class ItemForm(forms.ModelForm):
         super(ItemForm, self).__init__(*args, **kwargs)
         
         # กรองข้อมูลตาม User
-        self.fields['project'].queryset = Note.objects.filter(author=user)
+        self.fields['project'].queryset = Novel.objects.filter(author=user)
         self.fields['owner'].queryset = Character.objects.filter(created_by=user)
         self.fields['location'].queryset = Location.objects.filter(created_by=user)
         

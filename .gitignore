@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+
+# JavaScript / Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Media (รูปที่อัปโหลด ไม่ควรเอาขึ้น Git เพราะมันหนักและเป็นข้อมูลส่วนตัว)
+media/

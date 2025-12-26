@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db import models
-from notes.models import Note # ดึง Note มาเชื่อม Project
+from notes.models import Novel # ดึง Novel มาเชื่อม Project
 from worldbuilding.models import Character, Item, Location # ดึง Worldbuilding มาใช้
 
 class Scene(models.Model):
@@ -12,7 +12,7 @@ class Scene(models.Model):
     ]
 
     # 1. ความเชื่อมโยงหลัก
-    project = models.ForeignKey(Note, on_delete=models.CASCADE, related_name='scenes', help_text="ฉากนี้อยู่ในนิยายเรื่องไหน")
+    project = models.ForeignKey(Novel, on_delete=models.CASCADE, related_name='scenes', help_text="ฉากนี้อยู่ในนิยายเรื่องไหน")
     title = models.CharField(max_length=200, verbose_name="ชื่อฉาก")
     order = models.IntegerField(default=0, verbose_name="ลำดับฉาก") # เอาไว้เรียง 1, 2, 3
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='idea')
